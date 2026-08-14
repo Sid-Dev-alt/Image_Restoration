@@ -16,40 +16,86 @@ import torch.nn.functional as F
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Using inference device:", device)
 
-# Load NAFNet
-print("Loading NAFNet-GoPro...")
-nafnet_path = os.path.abspath("models/nafnet")
-sys.path.insert(0, nafnet_path)
-from basicsr.models.archs.NAFNet_arch import NAFNetLocal
+# Lazy loaded models
+nafnet_gopro = None
+restormer_motion = None
+restormer_defocus = None
+mprnet_deblur = None
 
-nafnet_gopro = NAFNetLocal(
-    img_channel=3,
-    width=64,
-    middle_blk_num=1,
-    enc_blk_nums=[1, 1, 1, 28],
-    dec_blk_nums=[1, 1, 1, 1],
-    train_size=(1, 3, 256, 256),
-    fast_imp=False
-)
-ckpt = torch.load("checkpoints/nafnet_gopro.pth", map_location="cpu")
-nafnet_gopro.load_state_dict(ckpt["params"], strict=True)
-nafnet_gopro.eval()
-nafnet_gopro.to(device)
-print("NAFNet-GoPro loaded successfully.")
+def get_nafnet_gopro():
+    global nafnet_gopro
+    if nafnet_gopro is None:
+        print("Loading NAFNet-GoPro...")
+        nafnet_path = os.path.abspath("models/nafnet")
+        sys.path.insert(0, nafnet_path)
+        from basicsr.models.archs.NAFNet_arch import NAFNetLocal
 
-# Clean up sys.path and sys.modules to prevent basicsr conflict
-sys.path.remove(nafnet_path)
-for mod_name in list(sys.modules.keys()):
-    if mod_name.startswith("basicsr"):
-        del sys.modules[mod_name]
+        nafnet_gopro = NAFNetLocal(
+            img_channel=3,
+            width=64,
+            middle_blk_num=1,
+            enc_blk_nums=[1, 1, 1, 28],
+            dec_blk_nums=[1, 1, 1, 1],
+            train_size=(1, 3, 256, 256),
+            fast_imp=False
+        )
+        ckpt = torch.load("checkpoints/nafnet_gopro.pth", map_location="cpu")
+        nafnet_gopro.load_state_dict(ckpt["params"], strict=True)
+        nafnet_gopro.eval()
+        nafnet_gopro.to(device)
+        print("NAFNet-GoPro loaded successfully.")
 
-# Load Restormer
-print("Loading Restormer models...")
-restormer_path = os.path.abspath("models/restormer")
-sys.path.insert(0, restormer_path)
-from basicsr.models.archs.restormer_arch import Restormer
+        # Clean up
+        sys.path.remove(nafnet_path)
+        for mod_name in list(sys.modules.keys()):
+            if mod_name.startswith("basicsr"):
+                del sys.modules[mod_name]
+    return nafnet_gopro
+
+def get_restormer_motion():
+    global restormer_motion
+    if restormer_motion is None:
+        print("Loading Restormer-Motion...")
+        restormer_path = os.path.abspath("models/restormer")
+        sys.path.insert(0, restormer_path)
+        from basicsr.models.archs.restormer_arch import Restormer
+        restormer_motion = load_restormer("checkpoints/restormer_motion.pth")
+        sys.path.remove(restormer_path)
+        for mod_name in list(sys.modules.keys()):
+            if mod_name.startswith("basicsr"):
+                del sys.modules[mod_name]
+    return restormer_motion
+
+def get_restormer_defocus():
+    global restormer_defocus
+    if restormer_defocus is None:
+        print("Loading Restormer-Defocus...")
+        restormer_path = os.path.abspath("models/restormer")
+        sys.path.insert(0, restormer_path)
+        from basicsr.models.archs.restormer_arch import Restormer
+        restormer_defocus = load_restormer("checkpoints/restormer_defocus.pth")
+        sys.path.remove(restormer_path)
+        for mod_name in list(sys.modules.keys()):
+            if mod_name.startswith("basicsr"):
+                del sys.modules[mod_name]
+    return restormer_defocus
+
+def get_mprnet_deblur():
+    global mprnet_deblur
+    if mprnet_deblur is None:
+        print("Loading MPRNet-Deblur...")
+        mprnet_path = os.path.abspath("models/mprnet/Deblurring")
+        sys.path.insert(0, mprnet_path)
+        from MPRNet import MPRNet as MPRNetModel
+        mprnet_deblur = load_mprnet("checkpoints/mprnet_deblurring.pth")
+        sys.path.remove(mprnet_path)
+    return mprnet_deblur
 
 def load_restormer(checkpoint_path):
+    restormer_path = os.path.abspath("models/restormer")
+    if restormer_path not in sys.path:
+        sys.path.insert(0, restormer_path)
+    from basicsr.models.archs.restormer_arch import Restormer
     model = Restormer(
         inp_channels=3,
         out_channels=3,
@@ -67,31 +113,16 @@ def load_restormer(checkpoint_path):
     model.eval()
     return model.to(device)
 
-restormer_motion = load_restormer("checkpoints/restormer_motion.pth")
-restormer_defocus = load_restormer("checkpoints/restormer_defocus.pth")
-print("Restormer models loaded successfully.")
-
-# Clean up sys.path and sys.modules
-sys.path.remove(restormer_path)
-for mod_name in list(sys.modules.keys()):
-    if mod_name.startswith("basicsr"):
-        del sys.modules[mod_name]
-
-# Load MPRNet
-print("Loading MPRNet-Deblur...")
-mprnet_path = os.path.abspath("models/mprnet/Deblurring")
-sys.path.insert(0, mprnet_path)
-from MPRNet import MPRNet as MPRNetModel
-
 def load_mprnet(checkpoint_path):
+    mprnet_path = os.path.abspath("models/mprnet/Deblurring")
+    if mprnet_path not in sys.path:
+        sys.path.insert(0, mprnet_path)
+    from MPRNet import MPRNet as MPRNetModel
     model = MPRNetModel()
     ckpt = torch.load(checkpoint_path, map_location="cpu")
     model.load_state_dict(ckpt["state_dict"], strict=True)
     model.eval()
     return model.to(device)
-
-mprnet_deblur = load_mprnet("checkpoints/mprnet_deblurring.pth")
-print("MPRNet loaded successfully.")
 
 # Directories setup
 UPLOAD_DIR = os.path.abspath("input/uploads")
@@ -156,12 +187,13 @@ def classify_degradation(img_bgr, filename=""):
 def run_nafnet_inference(img_rgb):
     img_norm = img_rgb.astype(np.float32) / 255.0
     img_tensor = torch.from_numpy(img_norm).permute(2, 0, 1).unsqueeze(0).to(device)
+    model = get_nafnet_gopro()
     with torch.no_grad():
-        output_tensor = nafnet_gopro(img_tensor)
+        output_tensor = model(img_tensor)
     output_np = output_tensor.clamp(0, 1).squeeze(0).permute(1, 2, 0).cpu().numpy()
     return (output_np * 255.0).round().astype(np.uint8)
 
-def run_restormer_inference(model, img_rgb, window_size=8):
+def run_restormer_inference(model_or_getter, img_rgb, window_size=8):
     img_norm = img_rgb.astype(np.float32) / 255.0
     img_tensor = torch.from_numpy(img_norm).permute(2, 0, 1).unsqueeze(0).to(device)
 
@@ -169,6 +201,8 @@ def run_restormer_inference(model, img_rgb, window_size=8):
     pad_h = (window_size - h % window_size) % window_size
     pad_w = (window_size - w % window_size) % window_size
     img_padded = F.pad(img_tensor, (0, pad_w, 0, pad_h), mode='reflect')
+
+    model = model_or_getter() if callable(model_or_getter) else model_or_getter
 
     with torch.no_grad():
         output = model(img_padded)
@@ -187,8 +221,10 @@ def run_mprnet_inference(img_rgb, factor=8):
     padw = W - w if w % factor != 0 else 0
     img_padded = F.pad(img_tensor, (0, padw, 0, padh), mode='reflect')
 
+    model = get_mprnet_deblur()
+
     with torch.no_grad():
-        restored = mprnet_deblur(img_padded)
+        restored = model(img_padded)
 
     output = torch.clamp(restored[0], 0, 1)
     output = output[:, :, :h, :w]  # crop back
@@ -225,9 +261,9 @@ def process_images_task(session_id: str, model_name: str):
             if img_model == "nafnet_gopro":
                 restored_rgb = run_nafnet_inference(img_rgb)
             elif img_model == "restormer_motion":
-                restored_rgb = run_restormer_inference(restormer_motion, img_rgb)
+                restored_rgb = run_restormer_inference(get_restormer_motion, img_rgb)
             elif img_model == "restormer_defocus":
-                restored_rgb = run_restormer_inference(restormer_defocus, img_rgb)
+                restored_rgb = run_restormer_inference(get_restormer_defocus, img_rgb)
             elif img_model == "mprnet_deblur":
                 restored_rgb = run_mprnet_inference(img_rgb)
             else:
