@@ -57,10 +57,10 @@ if uploaded_files and not missing_checkpoints:
                     restored = web_app.run_nafnet_inference(img_rgb)
                     badge_style = '<span class="badge" style="background-color: #28a745;">NAFNet-GoPro (Motion Blur)</span>'
                 elif model_used == "restormer_defocus":
-                    restored = web_app.run_restormer_inference(web_app.restormer_defocus, img_rgb)
+                    restored = web_app.run_restormer_inference(web_app.get_restormer_defocus, img_rgb)
                     badge_style = '<span class="badge" style="background-color: #007bff;">Restormer-Defocus (Defocus Blur)</span>'
                 elif model_used == "restormer_motion":
-                    restored = web_app.run_restormer_inference(web_app.restormer_motion, img_rgb)
+                    restored = web_app.run_restormer_inference(web_app.get_restormer_motion, img_rgb)
                     badge_style = '<span class="badge" style="background-color: #6f42c1;">Restormer-Motion (General Blur)</span>'
                 else:
                     restored = web_app.run_mprnet_inference(img_rgb)
