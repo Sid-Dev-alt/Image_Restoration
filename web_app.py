@@ -62,7 +62,11 @@ def get_nafnet_gopro():
             fast_imp=False
         )
         ckpt = torch.load("checkpoints/nafnet_gopro.pth", map_location="cpu")
-        nafnet_gopro.load_state_dict(ckpt["params"], strict=True)
+        state_dict = ckpt.get("params", ckpt)
+        nafnet_gopro.load_state_dict(state_dict, strict=True)
+        del ckpt
+        del state_dict
+        import gc; gc.collect()
         nafnet_gopro.eval()
         nafnet_gopro.to(device)
         print("NAFNet-GoPro loaded successfully.")
@@ -134,7 +138,11 @@ def load_restormer(checkpoint_path):
         dual_pixel_task=False
     )
     ckpt = torch.load(checkpoint_path, map_location="cpu")
-    model.load_state_dict(ckpt["params"], strict=True)
+    state_dict = ckpt.get("params", ckpt)
+    model.load_state_dict(state_dict, strict=True)
+    del ckpt
+    del state_dict
+    import gc; gc.collect()
     model.eval()
     return model.to(device)
 
@@ -145,7 +153,11 @@ def load_mprnet(checkpoint_path):
     from MPRNet import MPRNet as MPRNetModel
     model = MPRNetModel()
     ckpt = torch.load(checkpoint_path, map_location="cpu")
-    model.load_state_dict(ckpt["state_dict"], strict=True)
+    state_dict = ckpt.get("state_dict", ckpt)
+    model.load_state_dict(state_dict, strict=True)
+    del ckpt
+    del state_dict
+    import gc; gc.collect()
     model.eval()
     return model.to(device)
 
