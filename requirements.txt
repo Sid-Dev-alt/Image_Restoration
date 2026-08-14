@@ -14,3 +14,7 @@ pyyaml
 requests
 lpips
 gdown
+lmdb
+einops
+addict
+future
