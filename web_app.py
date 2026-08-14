@@ -22,9 +22,31 @@ restormer_motion = None
 restormer_defocus = None
 mprnet_deblur = None
 
+def free_unused_models(keep_model_name):
+    global nafnet_gopro, restormer_motion, restormer_defocus, mprnet_deblur
+    import gc
+    
+    if keep_model_name != "nafnet_gopro" and nafnet_gopro is not None:
+        print("Freeing NAFNet-GoPro from memory...")
+        nafnet_gopro = None
+    if keep_model_name != "restormer_motion" and restormer_motion is not None:
+        print("Freeing Restormer-Motion from memory...")
+        restormer_motion = None
+    if keep_model_name != "restormer_defocus" and restormer_defocus is not None:
+        print("Freeing Restormer-Defocus from memory...")
+        restormer_defocus = None
+    if keep_model_name != "mprnet_deblur" and mprnet_deblur is not None:
+        print("Freeing MPRNet-Deblur from memory...")
+        mprnet_deblur = None
+        
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
 def get_nafnet_gopro():
     global nafnet_gopro
     if nafnet_gopro is None:
+        free_unused_models("nafnet_gopro")
         print("Loading NAFNet-GoPro...")
         nafnet_path = os.path.abspath("models/nafnet")
         sys.path.insert(0, nafnet_path)
@@ -55,6 +77,7 @@ def get_nafnet_gopro():
 def get_restormer_motion():
     global restormer_motion
     if restormer_motion is None:
+        free_unused_models("restormer_motion")
         print("Loading Restormer-Motion...")
         restormer_path = os.path.abspath("models/restormer")
         sys.path.insert(0, restormer_path)
@@ -69,6 +92,7 @@ def get_restormer_motion():
 def get_restormer_defocus():
     global restormer_defocus
     if restormer_defocus is None:
+        free_unused_models("restormer_defocus")
         print("Loading Restormer-Defocus...")
         restormer_path = os.path.abspath("models/restormer")
         sys.path.insert(0, restormer_path)
@@ -83,6 +107,7 @@ def get_restormer_defocus():
 def get_mprnet_deblur():
     global mprnet_deblur
     if mprnet_deblur is None:
+        free_unused_models("mprnet_deblur")
         print("Loading MPRNet-Deblur...")
         mprnet_path = os.path.abspath("models/mprnet/Deblurring")
         sys.path.insert(0, mprnet_path)
