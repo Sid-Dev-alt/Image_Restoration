@@ -220,18 +220,41 @@ def classify_degradation(img_bgr, filename=""):
         print(f"Error during degradation classification: {str(e)}")
         return "nafnet_gopro"  # safe default fallback
 
+def preprocess_for_cpu_limit(img_rgb, max_dim=400):
+    h_orig, w_orig = img_rgb.shape[:2]
+    is_cpu = (device.type == "cpu")
+    if is_cpu and max(h_orig, w_orig) > max_dim:
+        scale = float(max_dim) / max(h_orig, w_orig)
+        h_new, w_new = int(h_orig * scale), int(w_orig * scale)
+        h_new = (h_new // 16) * 16
+        w_new = (w_new // 16) * 16
+        if h_new == 0: h_new = 16
+        if w_new == 0: w_new = 16
+        img_in = cv2.resize(img_rgb, (w_new, h_new), interpolation=cv2.INTER_AREA)
+        return img_in, (h_orig, w_orig), True
+    return img_rgb, (h_orig, w_orig), False
+
+def postprocess_for_cpu_limit(img_rgb, orig_size, was_scaled):
+    if was_scaled:
+        h_orig, w_orig = orig_size
+        return cv2.resize(img_rgb, (w_orig, h_orig), interpolation=cv2.INTER_CUBIC)
+    return img_rgb
+
 # Inference wrappers
 def run_nafnet_inference(img_rgb):
-    img_norm = img_rgb.astype(np.float32) / 255.0
+    img_in, orig_size, was_scaled = preprocess_for_cpu_limit(img_rgb)
+    img_norm = img_in.astype(np.float32) / 255.0
     img_tensor = torch.from_numpy(img_norm).permute(2, 0, 1).unsqueeze(0).to(device)
     model = get_nafnet_gopro()
     with torch.no_grad():
         output_tensor = model(img_tensor)
     output_np = output_tensor.clamp(0, 1).squeeze(0).permute(1, 2, 0).cpu().numpy()
-    return (output_np * 255.0).round().astype(np.uint8)
+    out_img = (output_np * 255.0).round().astype(np.uint8)
+    return postprocess_for_cpu_limit(out_img, orig_size, was_scaled)
 
 def run_restormer_inference(model_or_getter, img_rgb, window_size=8):
-    img_norm = img_rgb.astype(np.float32) / 255.0
+    img_in, orig_size, was_scaled = preprocess_for_cpu_limit(img_rgb)
+    img_norm = img_in.astype(np.float32) / 255.0
     img_tensor = torch.from_numpy(img_norm).permute(2, 0, 1).unsqueeze(0).to(device)
 
     _, _, h, w = img_tensor.shape
@@ -246,10 +269,12 @@ def run_restormer_inference(model_or_getter, img_rgb, window_size=8):
 
     output = output[:, :, :h, :w]  # crop back
     output_np = output.clamp(0, 1).squeeze(0).permute(1, 2, 0).cpu().numpy()
-    return (output_np * 255.0).round().astype(np.uint8)
+    out_img = (output_np * 255.0).round().astype(np.uint8)
+    return postprocess_for_cpu_limit(out_img, orig_size, was_scaled)
 
 def run_mprnet_inference(img_rgb, factor=8):
-    img_norm = img_rgb.astype(np.float32) / 255.0
+    img_in, orig_size, was_scaled = preprocess_for_cpu_limit(img_rgb)
+    img_norm = img_in.astype(np.float32) / 255.0
     img_tensor = torch.from_numpy(img_norm).permute(2, 0, 1).unsqueeze(0).to(device)
 
     h, w = img_tensor.shape[2], img_tensor.shape[3]
@@ -267,7 +292,8 @@ def run_mprnet_inference(img_rgb, factor=8):
     output = output[:, :, :h, :w]  # crop back
 
     output_np = output.squeeze(0).permute(1, 2, 0).cpu().numpy()
-    return (output_np * 255.0).round().astype(np.uint8)
+    out_img = (output_np * 255.0).round().astype(np.uint8)
+    return postprocess_for_cpu_limit(out_img, orig_size, was_scaled)
 
 # Async Background Job
 def process_images_task(session_id: str, model_name: str):
