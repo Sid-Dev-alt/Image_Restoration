@@ -26,14 +26,47 @@ st.markdown("""
 st.title("Universal Image Restoration")
 st.write("Upload your images to automatically restore and enhance blur, noise, and low-light degradation using pre-trained Deep Learning models.")
 
-# Checkpoints existence check
+# Ensure checkpoints directory exists
+os.makedirs("checkpoints", exist_ok=True)
+
+# Helper function to download file with progress
+def download_url(url, dest_path):
+    import urllib.request
+    urllib.request.urlretrieve(url, dest_path)
+
+def download_gdrive(file_id, dest_path):
+    import gdown
+    gdown.download(id=file_id, output=dest_path, quiet=False)
+
+# Check and download models automatically if missing
+models_to_download = {
+    "checkpoints/nafnet_gopro.pth": ("url", "https://huggingface.co/nyanko7/nafnet-models/resolve/main/NAFNet-GoPro-width64.pth"),
+    "checkpoints/restormer_motion.pth": ("url", "https://github.com/swz30/Restormer/releases/download/v1.0/motion_deblurring.pth"),
+    "checkpoints/restormer_defocus.pth": ("url", "https://github.com/swz30/Restormer/releases/download/v1.0/single_image_defocus_deblurring.pth"),
+    "checkpoints/mprnet_deblurring.pth": ("gdrive", "1QwQUVbk6YVOJViCsOKYNykCsdJSVGRtb")
+}
+
 missing_checkpoints = []
-for cp in ["checkpoints/nafnet_gopro.pth", "checkpoints/restormer_motion.pth", "checkpoints/restormer_defocus.pth", "checkpoints/mprnet_deblurring.pth"]:
+for cp in models_to_download.keys():
     if not os.path.exists(cp):
         missing_checkpoints.append(cp)
 
 if missing_checkpoints:
-    st.error(f"Missing model checkpoints: {missing_checkpoints}. Please ensure checkpoints are pushed to your repository.")
+    st.info("First-time setup: Downloading pre-trained model checkpoints. Please wait, this may take a couple of minutes...")
+    for cp in missing_checkpoints:
+        source_type, source = models_to_download[cp]
+        with st.spinner(f"Downloading model {os.path.basename(cp)}..."):
+            try:
+                if source_type == "url":
+                    download_url(source, cp)
+                elif source_type == "gdrive":
+                    download_gdrive(source, cp)
+                st.success(f"Downloaded {os.path.basename(cp)} successfully!")
+            except Exception as e:
+                st.error(f"Error downloading {os.path.basename(cp)}: {e}")
+
+# Recalculate missing checkpoints
+missing_checkpoints = [cp for cp in models_to_download.keys() if not os.path.exists(cp)]
 
 uploaded_files = st.file_uploader("Choose images...", type=["jpg", "jpeg", "png", "bmp"], accept_multiple_files=True)
 
