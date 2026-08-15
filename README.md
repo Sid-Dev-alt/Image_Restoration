@@ -29,16 +29,8 @@ Resolves camera focus degradation on high-resolution images.
 ![Eiffel Defocus Web App Screenshot](comparisons/screenshot_eiffel_defocus.png)
 
 ### 2. Mixed/Severe Deblurring (MPRNet-Deblur)
-Restores mixed degradation patterns progressive stages.
+Restores mixed degradation patterns in progressive stages.
 ![Eiffel Mixed Web App Screenshot](comparisons/screenshot_eiffel_mixed.png)
-
-### 3. Motion Deblurring (NAFNet-GoPro)
-Deblurs high-frequency motion artifacts.
-![Dog Motion Web App Screenshot](comparisons/screenshot_dog_motion.png)
-
-### 4. Severe Deblurring on Fur/Texture (MPRNet-Deblur)
-Restores complex fur details and textures.
-![Dog Mixed Web App Screenshot](comparisons/screenshot_dog_mixed.png)
 
 ---
 
