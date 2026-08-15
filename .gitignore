@@ -3,7 +3,6 @@ checkpoints/
 
 # Generated outputs and comparison images
 output/
-comparisons/
 
 # Jupyter notebooks checkpoints and metadata
 .ipynb_checkpoints/
