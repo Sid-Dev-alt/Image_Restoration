@@ -20,21 +20,25 @@ The backend features an automatic image analysis algorithm (based on Laplacian v
 
 ---
 
-## 📸 Before / After Restoration Comparisons
+## 📸 Web Application Screenshots & Comparisons
 
-Here are some actual output results processed by the restoration pipeline:
+Here is how the restoration web application displays side-by-side comparisons of degraded and restored images:
 
-### 1. Defocus Deblurring (Restormer)
-Enhances camera focus issues, sharpening the main subject cleanly.
-![Defocus Blur Restoration](comparisons/eiffel_defocus_comparison.jpg)
+### 1. Defocus Deblurring (Restormer-Defocus)
+Resolves camera focus degradation on high-resolution images.
+![Eiffel Defocus Web App Screenshot](comparisons/screenshot_eiffel_defocus.png)
 
-### 2. Motion Deblurring (NAFNet)
-Resolves hand-shake or fast-moving subject blur.
-![Motion Blur Restoration](comparisons/blurry_motion_comparison.jpg)
+### 2. Mixed/Severe Deblurring (MPRNet-Deblur)
+Restores mixed degradation patterns progressive stages.
+![Eiffel Mixed Web App Screenshot](comparisons/screenshot_eiffel_mixed.png)
 
-### 3. Noise & Low-Light Enhancement
-Removes high-frequency camera sensor noise and brings out details in dark areas.
-![Noise and Lowlight Restoration](comparisons/noisy_lowlight_comparison.jpg)
+### 3. Motion Deblurring (NAFNet-GoPro)
+Deblurs high-frequency motion artifacts.
+![Dog Motion Web App Screenshot](comparisons/screenshot_dog_motion.png)
+
+### 4. Severe Deblurring on Fur/Texture (MPRNet-Deblur)
+Restores complex fur details and textures.
+![Dog Mixed Web App Screenshot](comparisons/screenshot_dog_mixed.png)
 
 ---
 
