@@ -26,11 +26,11 @@ Here is how the restoration web application displays side-by-side comparisons of
 
 ### 1. Defocus Deblurring (Restormer-Defocus)
 Resolves camera focus degradation on high-resolution images.
-![Eiffel Defocus Web App Screenshot](comparisons/screenshot_eiffel_defocus.png)
+![Eiffel Defocus Web App Screenshot](comparisons/screenshot_eiffel_defocus_v3.png)
 
 ### 2. Mixed/Severe Deblurring (MPRNet-Deblur)
 Restores mixed degradation patterns in progressive stages.
-![Eiffel Mixed Web App Screenshot](comparisons/screenshot_eiffel_mixed.png)
+![Eiffel Mixed Web App Screenshot](comparisons/screenshot_eiffel_mixed_v3.png)
 
 ---
 
