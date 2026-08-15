@@ -34,7 +34,7 @@ Restores mixed degradation patterns in progressive stages.
 
 ---
 
-## 🛠️ Local Installation & Development
+<!-- ## 🛠️ Local Installation & Development
 
 ### Prerequisite: Setup Checkpoints
 Ensure you have downloaded the `.pth` pre-trained checkpoints and placed them in the `checkpoints/` directory:
@@ -65,4 +65,4 @@ This codebase also includes a custom premium UI built on React (Vite) and a Fast
    cd frontend
    npm install
    npm run dev
-   ```
+   ``` -->
