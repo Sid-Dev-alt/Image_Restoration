@@ -50,16 +50,14 @@ def get_nafnet_gopro():
         print("Loading NAFNet-GoPro...")
         nafnet_path = os.path.abspath("models/nafnet")
         sys.path.insert(0, nafnet_path)
-        from basicsr.models.archs.NAFNet_arch import NAFNetLocal
+        from basicsr.models.archs.NAFNet_arch import NAFNet
 
-        nafnet_gopro = NAFNetLocal(
+        nafnet_gopro = NAFNet(
             img_channel=3,
             width=64,
             middle_blk_num=1,
             enc_blk_nums=[1, 1, 1, 28],
-            dec_blk_nums=[1, 1, 1, 1],
-            train_size=(1, 3, 256, 256),
-            fast_imp=False
+            dec_blk_nums=[1, 1, 1, 1]
         )
         ckpt = torch.load("checkpoints/nafnet_gopro.pth", map_location="cpu")
         state_dict = ckpt.get("params", ckpt)
