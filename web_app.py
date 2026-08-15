@@ -218,7 +218,7 @@ def classify_degradation(img_bgr, filename=""):
         print(f"Error during degradation classification: {str(e)}")
         return "nafnet_gopro"  # safe default fallback
 
-def preprocess_for_cpu_limit(img_rgb, max_dim=400):
+def preprocess_for_cpu_limit(img_rgb, max_dim=800):
     h_orig, w_orig = img_rgb.shape[:2]
     is_cpu = (device.type == "cpu")
     if is_cpu and max(h_orig, w_orig) > max_dim:
